@@ -1,0 +1,6 @@
+[] create config file; this should include all roku requests, else ut them in their own conf
+[] push to github
+[] pull out common utilities into separate module
+[] create main module for calling all processes/threads
+[] create bin
+[] dockerize?
