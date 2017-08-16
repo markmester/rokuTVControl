@@ -1,0 +1,15 @@
+{"requests": {
+  "onOff": {"command": "keypress/Power", "method": "post", "options": []},
+  "HDMISelect": {"command": "keypress/InputHDMI<ID>", "method": "post", "options": {"ID": ["1","2","3","4"]}},
+  "volume": {"command": "keypress/Volume<ACTION>", "method": "post", "options": {"ACTON": ["Up", "Down", "Mute"]}},
+  "keypress": {"command": "keypress/<KEY>", "method": "post", "options": {"KEY": [
+    "Home", "Rev", "Fwd", "Play", "Select", "Left", "Right", "Down", "Up", "Back",
+    "InstantReplay", "Info", "Backspace", "Search", "Enter"
+  ]}},
+  "queryApps": {"command": "query/apps", "method": "get", "options": []},
+  "queryActiveApp": {"command": "query/active-app", "method": "get", "options": []},
+  "launchAppID": {"command": "launch/<appID>", "method": "post", "options": []}
+  }
+}
+
+

@@ -1,9 +1,12 @@
-package main
+package rokuAPI
 
 import (
 	"net"
 	"fmt"
 	"time"
+	"regexp"
+	"sync"
+	"strings"
 )
 
 const (
@@ -44,6 +47,7 @@ func Locate() (ip string){
 	conn, err := net.ListenUDP(protocol, &addr)
 	CheckError(err)
 	conn.SetDeadline(time.Now().Add(timeoutDuration))
+	defer conn.Close()
 
 
 	//Write discovery
@@ -67,23 +71,28 @@ func Locate() (ip string){
 
 func ParseIP(data string) (ip string) {
 	//tbd for parsing out IP fom resp
-	ip = data // todo: need to parse ip here!
+	r := regexp.MustCompile(`LOCATION:(.*)`)
+	match := r.FindStringSubmatch(data)
+	if len(match) > 1 {
+		r := strings.NewReplacer("http://", "",)
+		ip = r.Replace(strings.TrimSuffix(strings.TrimSpace(match[1]),"/"))
+	}
+
 	return ip
 }
 
-func LocateLoop() (ip string) {
+func LocateLoop(wg *sync.WaitGroup) {
+	defer wg.Done()
+	fmt.Println(">>> Starting Roku Device Location Loop...")
+
+	redis_ctx := *NewRedisClient()
 	for {
-		fmt.Println(">>> Attempting to locate Roku device...")
+		//fmt.Println(">>> Attempting to locate Roku device...")
 		ip := Locate()
 
 		if ip != "" {
-			return ip // todo: save this to a persistent store like redis
+			redis_ctx.Set("roku_address", ip)
 		}
+		time.Sleep(5 * time.Second)
 	}
-}
-
-func main() {
-	// Testing only; LocateLoop will be called in main module
-	ip := LocateLoop()
-	fmt.Println(ip)
 }
