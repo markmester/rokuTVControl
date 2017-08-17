@@ -4,12 +4,8 @@ import (
 	"github.com/go-redis/redis"
 	"time"
 	"fmt"
-)
-
-const (
-	redisAddr = "localhost:6379"
-	redisPassword = "" // no password set
-	redisDB = 0 // using default DB
+	"os/exec"
+	"strings"
 )
 
 type RedisClient struct {
@@ -18,37 +14,73 @@ type RedisClient struct {
 	db int32
 }
 
+func CheckRedisRunning() (running bool) {
+	running = true
+	cmd := "service"
+	args := []string{"redis-server", "status"}
+	Cmd := exec.Command(cmd, args...)
+	Out, err := Cmd.Output()
+	if err != nil {
+		fmt.Println("Unable to run command; Error: ", err)
+	}
+	out := string(Out)
+
+	if strings.Contains(out, "Active: inactive") {
+		running = false
+	}
+
+	return running
+}
+
+func StartRedisServer() {
+	cmd := "service"
+	args := []string{"redis-server", "start"}
+	Cmd := exec.Command(cmd, args...)
+	Out, err := Cmd.Output()
+	if err != nil {
+		fmt.Println("Unable to run command; Error: ", err)
+	}
+	fmt.Println(string(Out))
+}
 
 func Init() *RedisClient {
+	//if !CheckRedisRunning() {
+	//	StartRedisServer()
+	//}
+
 	var client *redis.Client
 	client = redis.NewClient(&redis.Options{
-		Addr:         redisAddr,
-		Password: 	 redisPassword,
+		Addr:         REDIS_ADDR,
+		Password:     REDIS_PASSWORD,
 		DialTimeout:  10 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		PoolSize:     10,
 		PoolTimeout:  30 * time.Second,
-		DB: 			 redisDB,
+		DB:           REDIS_DB,
 	})
 	client.FlushDB()
 
-	return &RedisClient{client: client, addr: redisAddr, db: redisDB}
+	return &RedisClient{client: client, addr: REDIS_ADDR, db: REDIS_DB}
 }
 
 func NewRedisClient() *RedisClient {
+	//if !CheckRedisRunning() {
+	//	StartRedisServer()
+	//}
+
 	var client *redis.Client
 	client = redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-		DB:       redisDB,
+		Addr:     REDIS_ADDR,
+		Password: REDIS_PASSWORD,
+		DB:       REDIS_DB,
 	})
 
 	pong, err := client.Ping().Result()
 	fmt.Println(pong, err)
 	// Output: PONG <nil>
 
-	return &RedisClient{client: client, addr: redisAddr, db: redisDB}
+	return &RedisClient{client: client, addr: REDIS_ADDR, db: REDIS_DB}
 
 }
 
@@ -65,7 +97,7 @@ func (redisClient *RedisClient) Set(key string, value string) {
 		panic(err)
 	}
 
-	fmt.Println(fmt.Sprintf("Set {%s: %s}", key, value))
+	// fmt.Println(fmt.Sprintf("Set {%s: %s}", key, value))
 }
 
 func (redisClient *RedisClient) Get(key string) (value string) {
@@ -77,7 +109,7 @@ func (redisClient *RedisClient) Get(key string) (value string) {
 	} else if err != nil {
 		panic(err)
 	}else {
-		fmt.Println(fmt.Sprintf("Retrieved {%s: %s}", key, value))
+		// fmt.Println(fmt.Sprintf("Retrieved {%s: %s}", key, value))
 	}
 	return value
 }
