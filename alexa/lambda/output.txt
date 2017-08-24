@@ -1,0 +1,1 @@
+{"stackTrace": [["/var/task/lambda_function.py", 44, "lambda_handler", "if event['session']['application']['applicationId'] != APPLICATION_ID:"]], "errorType": "KeyError", "errorMessage": "'session'"}

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/markmester/rokuTVControl/rokuAPI"
+	//"github.com/markmester/rokuTVControl/rokuAPI"
+	"github.com/markmester/rokuTVControl/alexa"
 	"fmt"
 	"sync"
 )
@@ -9,21 +10,18 @@ import (
 func main() {
 	var wg sync.WaitGroup
 
-	// ---------------------------- Locate Loop
-	wg.Add(1)
-	go rokuAPI.LocateLoop(&wg)
+	//// ---------------------------- Locate Loop
+	//wg.Add(1)
+	//go rokuAPI.LocateLoop(&wg)
+	//
+	//// ---------------------------- Webserver
+	//wg.Add(2)
+	//go rokuAPI.MuxServer(&wg)
 
-	// ---------------------------- Webserver
-	wg.Add(2)
-	go rokuAPI.MuxServer(&wg)
-
+	// ----------------------------- SQS polling
+	wg.Add(3)
+	go alexa.PollQueue(&wg, "roku-control",  5)
 
 	fmt.Println("Main: Waiting for GoRoutines to finish")
 	wg.Wait()
-
-	//const (
-	//	request = "POST /keypress/Power HTTP/1.1\r\n" +
-	//		"HOST: 172.24.1.99:8060\r\n\r\n"
-	//	myhost = "172.24.1.99:8060"
-	//)
 }

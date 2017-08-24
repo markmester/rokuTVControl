@@ -1,0 +1,10 @@
+LaunchApp launch {App}
+LaunchApp put on {App}
+LaunchApp play {App}
+PowerTV power on
+PowerTV power off
+PowerTV turn on
+PowerTV turn off
+PowerTV power down
+PowerTV power up
+PowerTV shut down

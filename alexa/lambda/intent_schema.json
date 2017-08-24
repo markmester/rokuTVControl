@@ -1,0 +1,19 @@
+{
+  "intents": [
+    {
+      "intent": "PowerTV"
+    },
+    {
+      "intent": "LaunchApp",
+      "slots": [
+        {
+          "name": "App",
+          "type": "LIST_OF_APPS"
+        }
+      ]
+    },
+    {
+     	"intent": "AMAZON.HelpIntent"
+    }
+  ]
+}
