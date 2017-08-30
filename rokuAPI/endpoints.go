@@ -2,17 +2,12 @@ package rokuAPI
 
 import (
 	"encoding/json"
-	"log"
-	"net/http"
-
-	"github.com/gorilla/mux"
 	"strings"
-	"sync"
 	"fmt"
 )
 
-func PowerEndpoint(w http.ResponseWriter, req *http.Request) {
-	out := map[string]string{
+func PowerEndpoint() (out map[string]string) {
+	out = map[string]string{
 		"success": "true",
 		"roku_server_data": "None",
 		"lirc_server_data": "None",
@@ -23,14 +18,13 @@ func PowerEndpoint(w http.ResponseWriter, req *http.Request) {
 	roku_addr := redis_ctx.Get("roku_address")
 
 	if roku_addr != "" {
-		// first try out API endoint
+		// first try our API endoint
 		resp := RokuRequest(roku_addr, "/keypress/Power", "post")
 
 		if strings.Contains(resp, "HTTP/1.1 200 OK") {
 			out["roku_server_data"] = "Successfully hit /keypress/Power Roku API endpoint"
-			json.NewEncoder(w).Encode(out)
 
-			return
+			return out
 		} else {
 			out["success"] = "false"
 			out["roku_server_data"] = "Unable to hit /keypress/Power Roku API endpoint"
@@ -51,19 +45,14 @@ func PowerEndpoint(w http.ResponseWriter, req *http.Request) {
 		out["errors"] = "Unable to find Roku Address"
 	}
 
-	json.NewEncoder(w).Encode(out)
-
-	return
+	return out
 }
 
-func LaunchAppEndpoint(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	name := vars["name"]
-	out := map[string]string{
+func LaunchAppEndpoint(name string) (out map[string]string) {
+	out = map[string]string{
 		"success": "true",
 		"data": "None",
 	}
-
 
 	fmt.Println(">>> locating id associated with app ", name)
 
@@ -72,8 +61,8 @@ func LaunchAppEndpoint(w http.ResponseWriter, req *http.Request) {
 
 	if roku_addr == "" {
 		out["succes"], out["data"] = "false", "Unable to locate Roku device"
-		json.NewEncoder(w).Encode(out)
-		return
+
+		return out
 	}
 
 	// get id associated with app
@@ -115,17 +104,5 @@ func LaunchAppEndpoint(w http.ResponseWriter, req *http.Request) {
 		out["data"] = fmt.Sprintf("Unable to find matching app '%s'", name)
 	}
 
-	json.NewEncoder(w).Encode(out)
-}
-
-func MuxServer(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	router := mux.NewRouter()
-
-	// endpoints
-	router.HandleFunc("/power", PowerEndpoint).Methods("GET")
-	router.HandleFunc("/app/{name}", LaunchAppEndpoint).Methods("GET")
-
-	log.Fatal(http.ListenAndServe(":5000", router))
+	return out
 }

@@ -71,7 +71,7 @@ func ParseIP(data string) (ip string) {
 func WakeRoku() {
 	fmt.Println(">>> Waking Roku...")
 	_ = LircServerRequest(LIRC_SERVER_ADDR, "/power", "GET")
-	time.Sleep(10 * time.Second)
+	time.Sleep(30 * time.Second)
 	_ = LircServerRequest(LIRC_SERVER_ADDR, "/power", "GET")
 }
 

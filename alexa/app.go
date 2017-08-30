@@ -1,15 +1,16 @@
 package alexa
 
 import (
-	_ "github.com/aws/aws-sdk-go/service/sqs"
-	"sync"
-	"fmt"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/aws"
-	"os"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"time"
+	"os"
+	"sync"
+	"fmt"
+	"encoding/json"
+	"github.com/markmester/rokuTVControl/rokuAPI"
 )
 
 //PollQueue: Module for polling AWS SQS for alexa events and calling requested function e.g. powering on device pr
@@ -61,11 +62,38 @@ func PollQueue(wg *sync.WaitGroup, queue_name string, timeout int64) {
 
 		fmt.Printf("Received %d messages.\n", len(result.Messages))
 
+		type Message struct {
+			Data map[string]string
+			Command string
+		}
+		var m Message
+
 		if len(result.Messages) > 0 {
-			for msg := 0; msg < len(result.Messages); msg++ {
+			for i := 0; i < len(result.Messages); i++ {
+				msg := result.Messages[i]
+
+				// decode body
+				body := *msg.Body
+				println(body)
+				json.Unmarshal([]byte(body), &m)
+
+				// make commanded request
+				command := m.Command
+				if command == "launch_app" {
+					app := m.Data["app"]
+					println(">>> launching ", app )
+					rokuAPI.LaunchAppEndpoint(app)
+				} else if command == "power" {
+					println(">>> powering roku device")
+					rokuAPI.PowerEndpoint()
+				} else {
+					println(">>> unrecognized command ")
+				}
+
+				// delete message
 				_, err := svc.DeleteMessage(&sqs.DeleteMessageInput{
 					QueueUrl:	resultURL.QueueUrl,
-					ReceiptHandle: result.Messages[msg].ReceiptHandle,
+					ReceiptHandle: msg.ReceiptHandle,
 				})
 
 				if err != nil {

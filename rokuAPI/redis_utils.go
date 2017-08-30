@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"sync"
 )
+
 
 type RedisClient struct {
 	client *redis.Client
@@ -16,37 +18,56 @@ type RedisClient struct {
 
 func CheckRedisRunning() (running bool) {
 	running = true
-	cmd := "service"
-	args := []string{"redis-server", "status"}
+	cmd := "redis-cli"
+	args := []string{"ping"}
 	Cmd := exec.Command(cmd, args...)
 	Out, err := Cmd.Output()
 	if err != nil {
-		fmt.Println("Unable to run command; Error: ", err)
+		return false
 	}
-	out := string(Out)
 
-	if strings.Contains(out, "Active: inactive") {
+	out := string(Out)
+	if !strings.Contains(out, "PONG") {
 		running = false
 	}
 
 	return running
 }
 
-func StartRedisServer() {
-	cmd := "service"
-	args := []string{"redis-server", "start"}
+func StartRedisServer(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// determine OS
+	cmd := "uname"
+	args := []string{}
 	Cmd := exec.Command(cmd, args...)
 	Out, err := Cmd.Output()
+	if err != nil { // OS is Mac
+		fmt.Println("Unable to run command; Error: ", err)
+		panic(err)
+	}
+
+	formatted_out := strings.TrimSpace(strings.ToLower(string(Out)))
+	if formatted_out == "darwin" {
+		cmd = "redis-server"
+	} else if formatted_out == "linux"{ // OS is linux
+		cmd = "service"
+		args = []string{"redis-server", "start"}
+	} else {
+		fmt.Println("Unknown OS; exiting...")
+		panic("Unknown OS")
+	}
+
+	// start redis
+	Cmd = exec.Command(cmd, args...)
+	Out, err = Cmd.Output()
 	if err != nil {
 		fmt.Println("Unable to run command; Error: ", err)
+		panic(err)
 	}
-	fmt.Println(string(Out))
 }
 
 func Init() *RedisClient {
-	//if !CheckRedisRunning() {
-	//	StartRedisServer()
-	//}
 
 	var client *redis.Client
 	client = redis.NewClient(&redis.Options{
@@ -65,9 +86,6 @@ func Init() *RedisClient {
 }
 
 func NewRedisClient() *RedisClient {
-	//if !CheckRedisRunning() {
-	//	StartRedisServer()
-	//}
 
 	var client *redis.Client
 	client = redis.NewClient(&redis.Options{
@@ -113,12 +131,3 @@ func (redisClient *RedisClient) Get(key string) (value string) {
 	}
 	return value
 }
-
-//func main() {
-//	//var c RedisClient = *Init()
-//	c := *NewRedisClient()
-//	c.Set("key", "testing")
-//	c.Get("key")
-//	fmt.Println(c)
-//
-//}

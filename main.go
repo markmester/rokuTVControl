@@ -1,22 +1,27 @@
 package main
 
 import (
-	//"github.com/markmester/rokuTVControl/rokuAPI"
+	"github.com/markmester/rokuTVControl/rokuAPI"
 	"github.com/markmester/rokuTVControl/alexa"
 	"fmt"
 	"sync"
+	"time"
 )
 
 func main() {
 	var wg sync.WaitGroup
 
-	//// ---------------------------- Locate Loop
-	//wg.Add(1)
-	//go rokuAPI.LocateLoop(&wg)
-	//
-	//// ---------------------------- Webserver
-	//wg.Add(2)
-	//go rokuAPI.MuxServer(&wg)
+	// ------------------------------ Redis
+	wg.Add(1)
+	redis_proc := rokuAPI.CheckRedisRunning()
+	if !redis_proc {
+		go rokuAPI.StartRedisServer(&wg)
+		time.Sleep(5 * time.Second) // give time for redis to start
+	}
+
+	// ---------------------------- Locate Loop
+	wg.Add(2)
+	go rokuAPI.LocateLoop(&wg)
 
 	// ----------------------------- SQS polling
 	wg.Add(3)
